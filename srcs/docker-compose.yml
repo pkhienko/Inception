@@ -1,0 +1,75 @@
+services:
+  nginx:
+    build: ./requirements/nginx
+    restart: always
+    container_name: nginx
+    ports:
+      - 443:443
+    depends_on:
+      - wordpress
+    env_file:
+      - .env
+    volumes:
+      - wordpress_volume:/var/www/html
+    networks:
+      - inception_network
+
+  wordpress:
+    build: ./requirements/wordpress
+    restart: always
+    container_name: wordpress
+    depends_on:
+      - mariadb
+    env_file:
+      - .env
+    volumes:
+      - wordpress_volume:/var/www/html
+    networks:
+      - inception_network
+    secrets:
+      - db_pwd
+      - wp_user_pwd
+      - wp_admin_pwd
+
+  mariadb:
+    build: ./requirements/mariadb
+    restart: always
+    container_name: mariadb
+    env_file:
+      - .env
+    volumes:
+      - database_volume:/var/lib/mysql
+    networks:
+      - inception_network
+    secrets:
+      - db_pwd
+      - db_root_pwd
+
+volumes:
+  wordpress_volume:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/pkhienko/data/wordpress
+  database_volume:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/pkhienko/data/mariadb
+
+networks:
+  inception_network:
+    name: Inception
+    driver: bridge
+
+secrets:
+  db_pwd: 
+    file: ../secrets/db_pwd.txt
+  db_root_pwd:
+    file: ../secrets/db_root_pwd.txt
+  wp_user_pwd:
+    file: ../secrets/wp_user_pwd.txt
+  wp_admin_pwd:
+    file: ../secrets/wp_admin_pwd.txt
